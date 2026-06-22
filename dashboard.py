@@ -41,19 +41,13 @@ def run_pipeline():
             from config import load_config, load_positions, OPENCODE_NEWS_MODEL
             import shutil
             sys.path.insert(0, str(ROOT))
+            from bloom_terminal.db import BloomDB
             from bloom_terminal.layer1_data import run_layer1
             from bloom_terminal.layer2_portfolio import run_layer2
             from bloom_terminal.layer3_macro import run_layer3
             from bloom_terminal.layer4_alerts import run_layer4
 
-            db = type("DB", (), {"_conn": lambda self: sqlite3.connect(DB_FILE)})()
-            db._p = DB_FILE
-            db.get_latest_valuations = lambda: query("SELECT * FROM valuations")
-            db.get_analytics = lambda rd: query_one("SELECT * FROM portfolio_analytics WHERE run_date=?", (rd,))
-            db.get_macro_score = lambda rd: query_one("SELECT * FROM macro_scores WHERE run_date=?", (rd,))
-            db.save_news_analysis = lambda t, rd, a, h: None
-            db.get_news_analysis = lambda t, rd: None
-
+            db = BloomDB(DB_FILE)
             cfg = load_config()
             pos = load_positions()
             opencode_avail = (shutil.which("opencode") or shutil.which("opencode.cmd")) is not None
