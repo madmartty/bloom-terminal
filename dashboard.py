@@ -26,35 +26,360 @@ sqlite3.connect(DB_FILE).executescript("""
 """).close()
 
 st.markdown("""<style>
-html, body, .stApp { background-color:#0a0a0a; color:#e0e0e0; font-family:'JetBrains Mono','SF Mono','Consolas',monospace; }
-.block-container { padding:1.5rem 2rem !important; max-width:100% !important; }
-h1 { font-size:1.5rem !important; color:#00c853 !important; font-family:'JetBrains Mono',monospace !important; }
-h2 { font-size:1.1rem !important; color:#90caf9 !important; margin-top:0 !important; }
-h3 { font-size:0.9rem !important; color:#b0bec5 !important; }
-p,li,div,span { font-family:'JetBrains Mono','SF Mono','Consolas',monospace !important; }
-.alert-box { padding:0.4rem 0.6rem; margin:0.2rem 0; border-left:3px solid; font-size:0.75rem; }
-.alert-high { border-color:#ff5252; background:rgba(255,82,82,0.08); }
-.alert-warn { border-color:#ffd740; background:rgba(255,215,64,0.08); }
-.alert-info { border-color:#64b5f6; background:rgba(100,181,246,0.08); }
-.news-box { background:#111; border:1px solid #2a2a2a; border-radius:4px; padding:0.6rem; margin:0.3rem 0; font-size:0.75rem; }
-.macro-box { background:#0d1b0d; border:1px solid #1a3a1a; border-radius:4px; padding:0.5rem 0.75rem; text-align:center; }
-.macro-score { font-size:1.8rem; font-weight:700; }
-.dte-pill { display:inline-block; padding:0.08rem 0.45rem; border-radius:8px; font-size:0.65rem; font-weight:700; line-height:1.3; }
-.dte-urgent { background:#ff5252; color:#000; }
-.dte-warn { background:#ffd740; color:#000; }
-.dte-ok { background:#2a2a2a; color:#999; }
-.news-header { display:flex; justify-content:space-between; align-items:center; }
-.sentiment-positive { color:#00c853; }
-.sentiment-negative { color:#ff5252; }
-.sentiment-neutral { color:#ffd740; }
-.strike-ladder { font-size:0.65rem; }
-.strike-hed { font-weight:700; color:#ffd740; }
-.strike-new { color:#00c853; }
-.prog-wrap { margin:2px 0; }
-.prog-label { font-size:0.6rem; color:#888; }
-.prog-fill { height:3px; border-radius:2px; transition:width 0.3s; }
-.stButton button { background:#1a1a1a !important; border:1px solid #333 !important; color:#e0e0e0 !important; font-family:'JetBrains Mono',monospace !important; }
-.stButton button:hover { border-color:#00c853 !important; }
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+html, body, .stApp {
+    background: radial-gradient(ellipse at 20% 50%, #0a0a1a 0%, #050508 100%) !important;
+    color: #e8e8e8;
+    font-family: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+}
+.stApp::before {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse 600px 400px at 80% 20%, rgba(0,200,83,0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+.block-container {
+    padding: 1.2rem 2rem !important;
+    max-width: 100% !important;
+    position: relative;
+    z-index: 1;
+}
+h1 {
+    font-size: 1.5rem !important;
+    color: #00c853 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    letter-spacing: -0.02em !important;
+    text-shadow: 0 0 40px rgba(0,200,83,0.15);
+    margin-bottom: 0.75rem !important;
+}
+h2 {
+    font-size: 0.85rem !important;
+    color: #e0e0e0 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding-bottom: 0.4rem;
+    margin: 1rem 0 0.6rem 0 !important;
+}
+h3 {
+    font-size: 0.75rem !important;
+    color: #999 !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.05em;
+}
+p, li, div, span, td, th {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace !important;
+}
+a {
+    color: #64b5f6 !important;
+    transition: color 0.2s ease !important;
+}
+a:hover {
+    color: #90caf9 !important;
+    text-decoration: underline !important;
+}
+
+/* ── Glass card base ── */
+.glass {
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    transition: all 0.25s cubic-bezier(0.32,0.72,0,1);
+}
+.glass:hover {
+    border-color: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.035);
+}
+
+/* ── Status cards ── */
+.status-card {
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 0.45rem 0.55rem;
+    text-align: center;
+    transition: all 0.25s cubic-bezier(0.32,0.72,0,1);
+    position: relative;
+    overflow: hidden;
+}
+.status-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    border-radius: 10px 10px 0 0;
+}
+.status-card:hover {
+    border-color: rgba(255,255,255,0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* ── Alert boxes ── */
+.alert-box {
+    padding: 0.45rem 0.65rem;
+    margin: 0.25rem 0;
+    border-left: 3px solid;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.7rem;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+.alert-box:hover {
+    transform: translateX(2px);
+}
+.alert-high {
+    border-color: #ff5252;
+    background: rgba(255,82,82,0.08);
+    box-shadow: inset 3px 0 12px rgba(255,82,82,0.05);
+}
+.alert-warn {
+    border-color: #ffd740;
+    background: rgba(255,215,64,0.06);
+    box-shadow: inset 3px 0 12px rgba(255,215,64,0.04);
+}
+.alert-info {
+    border-color: #64b5f6;
+    background: rgba(100,181,246,0.06);
+    box-shadow: inset 3px 0 12px rgba(100,181,246,0.04);
+}
+
+/* ── News box ── */
+.news-box {
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 0.6rem;
+    margin: 0.35rem 0;
+    font-size: 0.72rem;
+    transition: all 0.2s ease;
+}
+.news-box:hover {
+    border-color: rgba(255,255,255,0.12);
+}
+
+/* ── Macro box ── */
+.macro-box {
+    background: rgba(0,200,83,0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,200,83,0.12);
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.macro-box:hover {
+    border-color: rgba(0,200,83,0.25);
+    box-shadow: 0 0 30px rgba(0,200,83,0.05);
+}
+.macro-score {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+/* ── DTE pills ── */
+.dte-pill {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+.dte-urgent {
+    background: linear-gradient(135deg, #ff5252, #ff1744);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(255,82,82,0.3);
+}
+.dte-warn {
+    background: linear-gradient(135deg, #ffd740, #ffab00);
+    color: #1a1a1a;
+    box-shadow: 0 0 12px rgba(255,215,64,0.2);
+}
+.dte-ok {
+    background: rgba(255,255,255,0.06);
+    color: #888;
+}
+
+/* ── Sentiment ── */
+.sentiment-positive { color: #00c853; }
+.sentiment-negative { color: #ff5252; }
+.sentiment-neutral { color: #ffd740; }
+
+/* ── Strike ladder ── */
+.strike-hed {
+    font-weight: 700;
+    color: #ffd740;
+    text-shadow: 0 0 20px rgba(255,215,64,0.15);
+}
+.strike-new { color: #00c853; }
+
+/* ── Progress bars ── */
+.prog-wrap { margin: 3px 0; }
+.prog-label { font-size: 0.55rem; color: #666; margin-bottom: 1px; }
+.prog-track { background: rgba(255,255,255,0.04); border-radius: 3px; height: 4px; overflow: hidden; }
+.prog-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.32,0.72,0,1);
+    position: relative;
+}
+.prog-fill.target {
+    background: linear-gradient(90deg, #ffd740, #00c853);
+}
+.prog-fill.stop {
+    background: linear-gradient(90deg, #ffd740, #ff5252);
+}
+
+/* ── Buttons ── */
+.stButton button {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 8px !important;
+    color: #ccc !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.75rem !important;
+    transition: all 0.25s cubic-bezier(0.32,0.72,0,1) !important;
+    backdrop-filter: blur(8px);
+}
+.stButton button:hover {
+    border-color: rgba(0,200,83,0.4) !important;
+    background: rgba(0,200,83,0.06) !important;
+    color: #00c853 !important;
+    box-shadow: 0 0 24px rgba(0,200,83,0.08) !important;
+    transform: translateY(-1px);
+}
+.stButton button:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ── Selectbox / Input ── */
+.stSelectbox div[data-baseweb="select"] > div,
+.stTextInput input {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 6px !important;
+    color: #e0e0e0 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.75rem !important;
+    backdrop-filter: blur(8px);
+    transition: border 0.2s ease;
+}
+.stSelectbox div[data-baseweb="select"] > div:hover,
+.stTextInput input:hover {
+    border-color: rgba(255,255,255,0.15) !important;
+}
+.stSelectbox div[data-baseweb="select"] > div:focus,
+.stTextInput input:focus {
+    border-color: rgba(0,200,83,0.3) !important;
+    box-shadow: 0 0 16px rgba(0,200,83,0.04) !important;
+}
+
+/* ── Dataframe / metric styling ── */
+[data-testid="stMetricValue"] {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.6rem !important;
+    color: #666 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+}
+
+/* ── Spinner ── */
+.stSpinner > div {
+    border-color: rgba(0,200,83,0.3) !important;
+    border-top-color: #00c853 !important;
+}
+
+/* ── Expander ── */
+.streamlit-expanderHeader {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.75rem !important;
+    background: rgba(255,255,255,0.02) !important;
+    border-radius: 6px !important;
+}
+
+/* ── Caption ── */
+.stCaption {
+    color: #555 !important;
+    font-size: 0.65rem !important;
+}
+
+/* ── Info/Error boxes ── */
+.stAlert {
+    backdrop-filter: blur(8px);
+    border-radius: 8px !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* ── Table styling ── */
+table { border-collapse: collapse; width: 100%; }
+th { color: #555 !important; font-weight: 500 !important; font-size: 0.6rem !important; letter-spacing: 0.06em !important; text-transform: uppercase !important; }
+tr { transition: background 0.2s ease; }
+tr:hover { background: rgba(255,255,255,0.02); }
+td { transition: color 0.2s ease; }
+
+/* ── Regime analysis ── */
+.regime-box {
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid;
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin: 0.5rem 0;
+    transition: all 0.3s ease;
+}
+.regime-box:hover {
+    background: rgba(255,255,255,0.035);
+}
+.regime-stat {
+    text-align: center;
+}
+.regime-stat-label {
+    color: #666;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.regime-stat-value {
+    color: #e0e0e0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+.regime-timeline-item {
+    border-left: 3px solid;
+    padding: 0.2rem 0.6rem;
+    margin: 0.15rem 0;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+    border-radius: 0 4px 4px 0;
+}
+.regime-timeline-item:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+/* ── Tab styling ── */
+button[data-baseweb="tab"] {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.7rem !important;
+}
 </style>""", unsafe_allow_html=True)
 
 today = date.today().isoformat()
@@ -122,8 +447,13 @@ pnl = nav - cost
 pnl_pct = (pnl / cost * 100) if cost else 0
 ms = json.loads(macro["macro_json"]).get("score", "\u2014") if macro else "\u2014"
 
-# ── status strip ───────────────────────────────────────────────
-st.markdown(f"<h1>\U0001f33b BLOOM TERMINAL  <span style='color:#666;font-size:0.8rem;font-weight:400;'>| {today}</span></h1>", unsafe_allow_html=True)
+# ── header with nav button ──────────────────────────────────────
+hcol1, hcol2, hcol3 = st.columns([1, 0.5, 1])
+with hcol2:
+    st.markdown(f"<h1 style='text-align:center;'>\U0001f33b BLOOM TERMINAL</h1>", unsafe_allow_html=True)
+with hcol3:
+    st.page_link("pages/2_Regime_Analysis.py", label="📊 REGIME ANALYSIS", icon=None)
+st.markdown(f"<div style='text-align:center;color:#555;font-size:0.6rem;letter-spacing:0.06em;margin-bottom:0.5rem;'>{today}</div>", unsafe_allow_html=True)
 
 cols = st.columns(9)
 sv = [f"${nav:,.0f}" if nav else "\u2014",
@@ -137,11 +467,9 @@ sv = [f"${nav:,.0f}" if nav else "\u2014",
       f"${agg.get('net_vega_per_iv_point',0):+,.2f}"]
 for i, c in enumerate(cols):
     c.markdown(
-        f"<div style='background:#111;border:1px solid #2a2a2a;border-radius:4px;padding:0.35rem 0.5rem;text-align:center;'>"
-        f"<div style='color:#666;font-size:0.55rem;text-transform:uppercase;'>{['NAV','P&L','P&L%','Pos','Alerts','Macro','\u0394','\u0398/d','\u03a5/pt'][i]}</div>"
+        f"<div class='status-card'>"
+        f"<div style='color:#666;font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;'>{['NAV','P&L','P&L%','Pos','Alerts','Macro','\u0394','\u0398/d','\u03a5/pt'][i]}</div>"
         f"<div style='font-size:0.9rem;font-weight:700;color:#e0e0e0;'>{sv[i]}</div></div>", unsafe_allow_html=True)
-
-st.markdown("---")
 
 # ── left column: positions, theta decay, strike ladder, news ──
 left, right = st.columns([2.2, 1])
@@ -204,12 +532,10 @@ with left:
             bars = ""
             if pt is not None:
                 pt_clamped = min(max(pt,0),100)
-                pcol = "#00c853" if pt>=100 else "#ffd740"
-                bars += f"<div class='prog-wrap'><div class='prog-label'>Target {pt:.0f}%</div><div style='background:#1a1a1a;border-radius:2px;'><div class='prog-fill' style='width:{pt_clamped}%;background:{pcol};'></div></div></div>"
+                bars += f"<div class='prog-wrap'><div class='prog-label'>Target {pt:.0f}%</div><div class='prog-track'><div class='prog-fill target' style='width:{pt_clamped}%;'></div></div></div>"
             if ps is not None:
                 ps_clamped = min(max(ps,0),100)
-                scol = "#ff5252" if ps>=100 else "#ffd740"
-                bars += f"<div class='prog-wrap'><div class='prog-label'>Stop {ps:.0f}%</div><div style='background:#1a1a1a;border-radius:2px;'><div class='prog-fill' style='width:{ps_clamped}%;background:{scol};'></div></div></div>"
+                bars += f"<div class='prog-wrap'><div class='prog-label'>Stop {ps:.0f}%</div><div class='prog-track'><div class='prog-fill stop' style='width:{ps_clamped}%;'></div></div></div>"
 
             rows_data.append({
                 "name":f"<div title='{pid}'>{name}</div>", "type":type_str,
@@ -220,16 +546,15 @@ with left:
             })
 
         headers = ["Name","","DTE","Entry","Mark","Value","P&L $","P&L %","\u0394","\u0398/d","IV","Prog"]
-        html = '<table style="width:100%;border-collapse:collapse;font-size:0.68rem;">'
-        html += "<tr style='border-bottom:1px solid #333;'>"
+        html = '<table style="width:100%;font-size:0.68rem;">'
+        html += "<tr>"
         for h in headers:
-            html += f"<th style='padding:0.3rem 0.4rem;text-align:left;color:#666;font-weight:400;'>{h}</th>"
+            html += f"<th style='padding:0.3rem 0.4rem;text-align:left;'>{h}</th>"
         html += "</tr>"
         for r in rows_data:
-            html += "<tr style='border-bottom:1px solid #151515;'>"
+            html += "<tr>"
             for k in headers:
                 val = r.get(k,"")
-                bw = "0" if k != "Prog" else "60" if k in r else ""
                 html += f"<td style='padding:0.2rem 0.4rem;'>{val}</td>"
             html += "</tr>"
         html += "</table>"
@@ -275,17 +600,15 @@ with left:
                 fig.add_trace(go.Scatter(x=td_item["days"], y=td_item["theta"], mode="lines+markers",
                                          name=td_item["name"], line=dict(width=1.5), marker=dict(size=3)))
             fig.update_layout(height=250, margin=dict(l=40,r=10,t=10,b=30),
-                              paper_bgcolor="#0a0a0a", plot_bgcolor="#0a0a0a",
-                              font=dict(family="monospace",size=10,color="#e0e0e0"),
-                              legend=dict(orientation="h",y=1.1,x=0,font=dict(size=9)),
-                              xaxis_title="Days Forward", yaxis_title="\u0398/day ($)")
-            fig.update_xaxes(gridcolor="#1a1a1a", zerolinecolor="#222")
-            fig.update_yaxes(gridcolor="#1a1a1a", zerolinecolor="#222")
+                              paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                              font=dict(family="JetBrains Mono, monospace",size=10,color="#b0bec5"),
+                              legend=dict(orientation="h",y=1.1,x=0,font=dict(size=9,color="#888")),
+                              xaxis=dict(gridcolor="rgba(255,255,255,0.04)", zerolinecolor="rgba(255,255,255,0.06)", title_font=dict(size=10,color="#666")),
+                              yaxis=dict(gridcolor="rgba(255,255,255,0.04)", zerolinecolor="rgba(255,255,255,0.06)", title_font=dict(size=10,color="#666")))
             st.plotly_chart(fig, use_container_width=True)
 
         # ── strike ladder ─────────────────────────────────
         st.markdown("## STRIKE LADDER")
-        # for each option position, query snapshot and show +/-6 strikes
         for v in vals:
             if v["asset_type"] != "option":
                 continue
@@ -295,7 +618,6 @@ with left:
             if not snapshot:
                 continue
             chain = json.loads(snapshot["chain_json"])
-            # find matching expiry
             pos_obj = None
             for p in positions:
                 if p["ticker"]==ticker and p["asset_type"]=="option" and p.get("strike")==held_strike:
@@ -319,12 +641,12 @@ with left:
             start = max(0, held_idx-6)
             end = min(len(legs), held_idx+7)
             band = legs[start:end]
-            st.markdown(f"<div style='font-size:0.75rem;color:#90caf9;margin:0.5rem 0 0.2rem;'><strong>{ticker} ${opt_type.upper()} {expiry}</strong></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size:0.72rem;color:#90caf9;margin:0.5rem 0 0.2rem;font-weight:600;letter-spacing:0.04em;'>{ticker} ${opt_type.upper()} {expiry}</div>", unsafe_allow_html=True)
 
-            ladder_html = '<table style="width:100%;border-collapse:collapse;font-size:0.62rem;">'
-            ladder_html += "<tr style='border-bottom:1px solid #333;color:#666;'>"
+            ladder_html = '<table style="width:100%;font-size:0.62rem;">'
+            ladder_html += "<tr>"
             for hh in ["Strike","Bid","Ask","Last","IV","Vol","OI"]:
-                ladder_html += f"<th style='padding:0.2rem 0.3rem;text-align:right;font-weight:400;'>{hh}</th>"
+                ladder_html += f"<th style='padding:0.2rem 0.3rem;text-align:right;'>{hh}</th>"
             ladder_html += "</tr>"
             for l in band:
                 is_held = abs(l.get("strike",0)-held_strike) < 0.01
@@ -336,14 +658,9 @@ with left:
                 iv_l = f"{l.get('impliedVolatility',0)*100:.1f}%" if l.get("impliedVolatility") else "\u2014"
                 vol = f"{l.get('volume',0):,}" if l.get("volume") else "\u2014"
                 oi = f"{l.get('openInterest',0):,}" if l.get("openInterest") else "\u2014"
-                ladder_html += f"<tr class='{row_class}' style='border-bottom:1px solid #151515;'>"
-                ladder_html += f"<td style='padding:0.15rem 0.3rem;text-align:right;'>{strike_label}</td>"
-                ladder_html += f"<td style='padding:0.15rem 0.3rem;text-align:right;'>{bid}</td>"
-                ladder_html += f"<td style='padding:0.15rem 0.3rem;text-align:right;'>{ask}</td>"
-                ladder_html += f"<td style='padding:0.15rem 0.3rem;text-align:right;'>{last}</td>"
-                ladder_html += f"<td style='padding:0.15rem 0.3rem;text-align:right;'>{iv_l}</td>"
-                ladder_html += f"<td style='padding:0.15rem 0.3rem;text-align:right;'>{vol}</td>"
-                ladder_html += f"<td style='padding:0.15rem 0.3rem;text-align:right;'>{oi}</td>"
+                ladder_html += f"<tr class='{row_class}'>"
+                for val in [strike_label, bid, ask, last, iv_l, vol, oi]:
+                    ladder_html += f"<td style='padding:0.15rem 0.3rem;text-align:right;'>{val}</td>"
                 ladder_html += "</tr>"
             ladder_html += "</table>"
             st.markdown(ladder_html, unsafe_allow_html=True)
@@ -359,18 +676,18 @@ with left:
                 fig = px.bar(df, x="Ticker", y="%", color="%",
                              color_continuous_scale="RdYlGn", text="%")
                 fig.update_layout(height=200, margin=dict(l=10,r=10,t=10,b=20),
-                                  paper_bgcolor="#0a0a0a", plot_bgcolor="#0a0a0a",
-                                  font=dict(family="monospace",size=10,color="#e0e0e0"), showlegend=False)
-                fig.update_xaxes(gridcolor="#1a1a1a"); fig.update_yaxes(gridcolor="#1a1a1a")
+                                  paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                                  font=dict(family="JetBrains Mono, monospace",size=10,color="#b0bec5"), showlegend=False)
+                fig.update_xaxes(gridcolor="rgba(255,255,255,0.04)"); fig.update_yaxes(gridcolor="rgba(255,255,255,0.04)")
                 st.plotly_chart(fig, use_container_width=True)
             with col2:
                 df2 = pd.DataFrame([{"Sector": s, "%": p} for s, p in sp.items()])
                 fig2 = px.bar(df2, x="Sector", y="%", color="%",
                               color_continuous_scale="RdYlGn", text="%")
                 fig2.update_layout(height=200, margin=dict(l=10,r=10,t=10,b=20),
-                                   paper_bgcolor="#0a0a0a", plot_bgcolor="#0a0a0a",
-                                   font=dict(family="monospace",size=10,color="#e0e0e0"), showlegend=False)
-                fig2.update_xaxes(gridcolor="#1a1a1a"); fig2.update_yaxes(gridcolor="#1a1a1a")
+                                   paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                                   font=dict(family="JetBrains Mono, monospace",size=10,color="#b0bec5"), showlegend=False)
+                fig2.update_xaxes(gridcolor="rgba(255,255,255,0.04)"); fig2.update_yaxes(gridcolor="rgba(255,255,255,0.04)")
                 st.plotly_chart(fig2, use_container_width=True)
 
         # ── news with clickable headlines ─────────────────
@@ -380,7 +697,6 @@ with left:
                 s = json.loads(n["analysis_json"]).get("sentiment", "neutral")
                 an = json.loads(n["analysis_json"])
                 hl = json.loads(n["headlines_json"]) if n.get("headlines_json") else []
-                sc = "#00c853" if s=="positive" else "#ff5252" if s=="negative" else "#ffd740"
                 icon = "\u25cf"
                 pr_flag = ""
                 if an.get("position_relevant"):
@@ -394,16 +710,16 @@ with left:
                     title = hcontent.get("title","")
                     link = hcontent.get("link","")
                     if link and title:
-                        headline_links += f"<div style='margin:0.1rem 0;'><a href='{link}' target='_blank' style='color:#64b5f6;text-decoration:none;font-size:0.65rem;'>{title[:90]}</a></div>"
+                        headline_links += f"<div style='margin:0.1rem 0;'><a href='{link}' target='_blank' style='color:#64b5f6;text-decoration:none;font-size:0.65rem;transition:color 0.2s;'>{title[:90]}</a></div>"
                 st.markdown(
                     f"<div class='news-box'><div class='news-header'>"
                     f"<strong>{t}</strong>{pr_flag} <span class='sentiment-{s}'>{icon} {s.upper()}</span>"
-                    f"</div><div style='color:#b0bec5;margin-top:0.3rem;'>{an.get('summary','No summary')}</div>"
-                    f"<div style='color:#666;font-size:0.65rem;margin-top:0.3rem;'>Drivers: {', '.join(an.get('key_drivers',['\u2014']))}</div>",
+                    f"</div><div style='color:#b0bec5;margin-top:0.3rem;line-height:1.45;'>{an.get('summary','No summary')}</div>"
+                    f"<div style='color:#555;font-size:0.62rem;margin-top:0.3rem;letter-spacing:0.03em;'>Drivers: {', '.join(an.get('key_drivers',['\u2014']))}</div>",
                     unsafe_allow_html=True)
                 if headline_links:
                     st.markdown(
-                        f"<div style='margin-top:0.3rem;padding-top:0.3rem;border-top:1px solid #222;'>{headline_links}</div></div>",
+                        f"<div style='margin-top:0.35rem;padding-top:0.35rem;border-top:1px solid rgba(255,255,255,0.06);'>{headline_links}</div></div>",
                         unsafe_allow_html=True)
                 else:
                     st.markdown("</div>", unsafe_allow_html=True)
@@ -441,7 +757,7 @@ with right:
             f"<div style='margin-top:0.5rem;font-size:0.7rem;color:#b0bec5;'>VIX: {mj.get('raw_data',{}).get('vix_current','\u2014')}</div></div>",
             unsafe_allow_html=True)
         for k, v in mj.get("components",{}).items():
-            st.markdown(f"<div style='display:flex;justify-content:space-between;font-size:0.65rem;color:#888;padding:0.1rem 0;'><span>{k}</span><span>{v:.0f}</span></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='display:flex;justify-content:space-between;font-size:0.65rem;color:#888;padding:0.12rem 0;border-bottom:1px solid rgba(255,255,255,0.03);'><span>{k}</span><span>{v:.0f}</span></div>", unsafe_allow_html=True)
 
     # ── aggregate greeks ───────────────────────────────────
     st.markdown("## AGGREGATE GREEKS")
@@ -452,8 +768,8 @@ with right:
     ]
     for label, val, color in items:
         st.markdown(
-            f"<div style='display:flex;justify-content:space-between;font-size:0.7rem;padding:0.2rem 0;border-bottom:1px solid #1a1a1a;'>"
-            f"<span style='color:#666;'>{label}</span><span style='color:{color};'>{val}</span></div>",
+            f"<div style='display:flex;justify-content:space-between;font-size:0.68rem;padding:0.22rem 0;border-bottom:1px solid rgba(255,255,255,0.04);'>"
+            f"<span style='color:#666;'>{label}</span><span style='color:{color};font-weight:600;'>{val}</span></div>",
             unsafe_allow_html=True)
 
     # ── DTE warnings ───────────────────────────────────────
@@ -470,12 +786,12 @@ with right:
         for t, ir in iv_ranks.items():
             status = ir.get("status", "building_history")
             if status == "building_history":
-                st.markdown(f"<div style='font-size:0.65rem;color:#888;padding:0.1rem 0;'>{t}: building history ({ir.get('current_iv','\u2014')}%)</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.65rem;color:#666;padding:0.15rem 0;border-bottom:1px solid rgba(255,255,255,0.03);'>{t}: building history <span style='color:#888;'>({ir.get('current_iv','\u2014')}%)</span></div>", unsafe_allow_html=True)
             else:
                 flag_txt = ""
-                if ir.get("iv_rank") and ir["iv_rank"] >= 70: flag_txt = "<span style='color:#ff5252;'> RICH</span>"
-                elif ir.get("iv_rank") and ir["iv_rank"] <= 30: flag_txt = "<span style='color:#00c853;'> CHEAP</span>"
-                st.markdown(f"<div style='font-size:0.65rem;color:#888;padding:0.1rem 0;'>{t}: rank {ir.get('iv_rank','\u2014')}%ile (curr {ir.get('current_iv','\u2014'):.1f}%){flag_txt}</div>", unsafe_allow_html=True)
+                if ir.get("iv_rank") and ir["iv_rank"] >= 70: flag_txt = "<span style='color:#ff5252;font-weight:700;'> RICH</span>"
+                elif ir.get("iv_rank") and ir["iv_rank"] <= 30: flag_txt = "<span style='color:#00c853;font-weight:700;'> CHEAP</span>"
+                st.markdown(f"<div style='font-size:0.65rem;color:#666;padding:0.15rem 0;border-bottom:1px solid rgba(255,255,255,0.03);'>{t}: rank {ir.get('iv_rank','\u2014')}%ile <span style='color:#888;'>(curr {ir.get('current_iv','\u2014'):.1f}%)</span>{flag_txt}</div>", unsafe_allow_html=True)
     else:
         st.caption("No IV history yet.")
 
@@ -484,69 +800,9 @@ with right:
     if st.button("Run Pipeline"):
         run_pipeline()
 
-# ── regime analysis (full width) ───────────────────────────────
-st.markdown("---")
-st.markdown("## REGIME ANALYSIS")
-st.caption("Detect market regimes (Bull / Bear / Range-Bound / Volatile) using TwelveData price data")
-
-regime_ticker = st.text_input("Ticker", value="AAPL", key="regime_ticker", label_visibility="collapsed")
-col_a, col_b, col_c, _ = st.columns([2, 2, 2, 6])
-with col_a:
-    regime_start = st.text_input("Start Date", value="2026-01-01", key="regime_start")
-with col_b:
-    regime_end = st.text_input("End Date", value=today, key="regime_end")
-with col_c:
-    data_source = st.selectbox("Data Source", options=["auto", "yfinance", "twelvedata"], key="regime_source")
-
-if st.button("Run Regime Analysis", use_container_width=True):
-    with st.spinner(f"Fetching {regime_ticker.upper()} ..."):
-        try:
-            from bloom_terminal.regimes import fetch_data, compute_regime_report, build_regime_chart
-            df = fetch_data(regime_ticker, regime_start, regime_end, source=data_source)
-            report = compute_regime_report(df)
-            fig = build_regime_chart(report)
-
-            regime_colors = {
-                "BULL": "#00c853", "BEAR": "#ff5252", "RANGE_BOUND": "#ffd740",
-                "VOLATILE": "#ff9100", "RECOVERING": "#64b5f6", "CORRECTING": "#ff4081",
-                "INSUFFICIENT_DATA": "#444", "UNKNOWN": "#888",
-            }
-            rc = regime_colors.get(report["current_regime"], "#888")
-
-            st.markdown(
-                f"<div style='background:#111;border:1px solid {rc};border-radius:6px;padding:1rem 1.2rem;margin:0.5rem 0;'>"
-                f"<div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;'>"
-                f"<div style='font-size:1.1rem;font-weight:700;color:#e0e0e0;'>{regime_ticker.upper()} \u00b7 {regime_start} \u2192 {regime_end}</div>"
-                f"<div style='display:flex;gap:1.5rem;flex-wrap:wrap;'>"
-                f"<div style='text-align:center;'><div style='color:#666;font-size:0.55rem;text-transform:uppercase;'>Current Regime</div>"
-                f"<div style='color:{rc};font-size:1.2rem;font-weight:700;'>{report['current_regime']}</div></div>"
-                f"<div style='text-align:center;'><div style='color:#666;font-size:0.55rem;text-transform:uppercase;'>Confidence</div>"
-                f"<div style='color:#e0e0e0;font-size:1.2rem;font-weight:700;'>{report['confidence']:.0f}%</div></div>"
-                f"<div style='text-align:center;'><div style='color:#666;font-size:0.55rem;text-transform:uppercase;'>Stability</div>"
-                f"<div style='color:#e0e0e0;font-size:1.2rem;font-weight:700;'>{report['stability']}d</div></div>"
-                f"<div style='text-align:center;'><div style='color:#666;font-size:0.55rem;text-transform:uppercase;'>Regimes Detected</div>"
-                f"<div style='color:#e0e0e0;font-size:1.2rem;font-weight:700;'>{report['regimes_detected']}</div></div>"
-                f"</div></div>"
-                f"<div style='color:#888;font-size:0.65rem;margin-top:0.5rem;'>{regime_ticker.upper()} \u00b7 {report['segments'][0]['from'] if report['segments'] else regime_start} | CURRENT REGIME | CONFIDENCE | STABILITY | REGIMES DETECTED</div>"
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-
-            st.plotly_chart(fig, use_container_width=True)
-
-            # regime timeline
-            st.markdown("### Regime Timeline")
-            for s in report["segments"]:
-                sc = regime_colors.get(s["regime"], "#888")
-                st.markdown(
-                    f"<div style='border-left:3px solid {sc};padding:0.2rem 0.6rem;margin:0.15rem 0;font-size:0.7rem;'>"
-                    f"<strong style='color:{sc};'>{s['regime']:20s}</strong>  "
-                    f"<span style='color:#888;'>{s['from']} \u2192 {s['to']}</span></div>",
-                    unsafe_allow_html=True,
-                )
-
-        except Exception as e:
-            st.error(f"Regime analysis failed: {e}")
-
-st.markdown("---")
-st.caption("Bloom Terminal \u2022 Reports conditions, tracks your own targets \u2022 Never recommends trades")
+st.markdown(
+    "<div style='text-align:center;padding:0.5rem 0;'>"
+    "<span style='color:#333;font-size:0.6rem;letter-spacing:0.08em;'>"
+    "BLOOM TERMINAL \u2022 REPORTS CONDITIONS \u2022 TRACKS YOUR OWN TARGETS \u2022 NEVER RECOMMENDS TRADES"
+    "</span></div>",
+    unsafe_allow_html=True)
