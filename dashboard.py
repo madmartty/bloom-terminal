@@ -15,6 +15,15 @@ st.set_page_config(page_title="Bloom Terminal", page_icon="\U0001f33b",
 ROOT = Path(__file__).resolve().parent
 DB_FILE = str(ROOT / "bloom_terminal.db")
 
+sqlite3.connect(DB_FILE).executescript("""
+    CREATE TABLE IF NOT EXISTS valuations (id INTEGER PRIMARY KEY AUTOINCREMENT, run_date TEXT, position_id TEXT, ticker TEXT, asset_type TEXT, mark REAL, current_value REAL, cost_basis REAL, pnl_dollars REAL, pnl_pct REAL, dte INTEGER, delta REAL, gamma REAL, theta REAL, vega REAL, iv REAL, progress_target REAL, progress_stop REAL);
+    CREATE TABLE IF NOT EXISTS portfolio_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, run_date TEXT UNIQUE, analytics_json TEXT);
+    CREATE TABLE IF NOT EXISTS macro_scores (id INTEGER PRIMARY KEY AUTOINCREMENT, run_date TEXT UNIQUE, macro_json TEXT);
+    CREATE TABLE IF NOT EXISTS news_cache (id INTEGER PRIMARY KEY AUTOINCREMENT, ticker TEXT, run_date TEXT, analysis_json TEXT, headlines_json TEXT, UNIQUE(ticker, run_date));
+    CREATE TABLE IF NOT EXISTS alerts (id INTEGER PRIMARY KEY AUTOINCREMENT, run_date TEXT, alert_type TEXT, severity TEXT, ticker TEXT, position_id TEXT, message TEXT, detail TEXT);
+    CREATE TABLE IF NOT EXISTS snapshots (id INTEGER PRIMARY KEY AUTOINCREMENT, ticker TEXT, run_date TEXT, chain_json TEXT, UNIQUE(ticker, run_date));
+""").close()
+
 st.markdown("""<style>
 html, body, .stApp { background-color:#0a0a0a; color:#e0e0e0; font-family:monospace; }
 .block-container { padding:1.5rem 2rem !important; }
