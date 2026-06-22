@@ -484,5 +484,69 @@ with right:
     if st.button("Run Pipeline"):
         run_pipeline()
 
+# ── regime analysis (full width) ───────────────────────────────
+st.markdown("---")
+st.markdown("## REGIME ANALYSIS")
+st.caption("Detect market regimes (Bull / Bear / Range-Bound / Volatile) using TwelveData price data")
+
+regime_ticker = st.text_input("Ticker", value="AAPL", key="regime_ticker", label_visibility="collapsed")
+col_a, col_b, col_c, _ = st.columns([2, 2, 2, 6])
+with col_a:
+    regime_start = st.text_input("Start Date", value="2026-01-01", key="regime_start")
+with col_b:
+    regime_end = st.text_input("End Date", value=today, key="regime_end")
+with col_c:
+    regime_key = st.text_input("TwelveData API Key", value="demo", key="regime_apikey", type="password")
+
+if st.button("Run Regime Analysis", use_container_width=True):
+    with st.spinner(f"Fetching {regime_ticker.upper()} from TwelveData ..."):
+        try:
+            from bloom_terminal.regimes import fetch_twelvedata, compute_regime_report, build_regime_chart
+            df = fetch_twelvedata(regime_ticker, regime_start, regime_end, regime_key)
+            report = compute_regime_report(df)
+            fig = build_regime_chart(report)
+
+            regime_colors = {
+                "BULL": "#00c853", "BEAR": "#ff5252", "RANGE_BOUND": "#ffd740",
+                "VOLATILE": "#ff9100", "RECOVERING": "#64b5f6", "CORRECTING": "#ff4081",
+                "INSUFFICIENT_DATA": "#444", "UNKNOWN": "#888",
+            }
+            rc = regime_colors.get(report["current_regime"], "#888")
+
+            st.markdown(
+                f"<div style='background:#111;border:1px solid {rc};border-radius:6px;padding:1rem 1.2rem;margin:0.5rem 0;'>"
+                f"<div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;'>"
+                f"<div style='font-size:1.1rem;font-weight:700;color:#e0e0e0;'>{regime_ticker.upper()} \u00b7 {regime_start} \u2192 {regime_end}</div>"
+                f"<div style='display:flex;gap:1.5rem;flex-wrap:wrap;'>"
+                f"<div style='text-align:center;'><div style='color:#666;font-size:0.55rem;text-transform:uppercase;'>Current Regime</div>"
+                f"<div style='color:{rc};font-size:1.2rem;font-weight:700;'>{report['current_regime']}</div></div>"
+                f"<div style='text-align:center;'><div style='color:#666;font-size:0.55rem;text-transform:uppercase;'>Confidence</div>"
+                f"<div style='color:#e0e0e0;font-size:1.2rem;font-weight:700;'>{report['confidence']:.0f}%</div></div>"
+                f"<div style='text-align:center;'><div style='color:#666;font-size:0.55rem;text-transform:uppercase;'>Stability</div>"
+                f"<div style='color:#e0e0e0;font-size:1.2rem;font-weight:700;'>{report['stability']}d</div></div>"
+                f"<div style='text-align:center;'><div style='color:#666;font-size:0.55rem;text-transform:uppercase;'>Regimes Detected</div>"
+                f"<div style='color:#e0e0e0;font-size:1.2rem;font-weight:700;'>{report['regimes_detected']}</div></div>"
+                f"</div></div>"
+                f"<div style='color:#888;font-size:0.65rem;margin-top:0.5rem;'>{regime_ticker.upper()} \u00b7 {report['segments'][0]['from'] if report['segments'] else regime_start} | CURRENT REGIME | CONFIDENCE | STABILITY | REGIMES DETECTED</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+            # regime timeline
+            st.markdown("### Regime Timeline")
+            for s in report["segments"]:
+                sc = regime_colors.get(s["regime"], "#888")
+                st.markdown(
+                    f"<div style='border-left:3px solid {sc};padding:0.2rem 0.6rem;margin:0.15rem 0;font-size:0.7rem;'>"
+                    f"<strong style='color:{sc};'>{s['regime']:20s}</strong>  "
+                    f"<span style='color:#888;'>{s['from']} \u2192 {s['to']}</span></div>",
+                    unsafe_allow_html=True,
+                )
+
+        except Exception as e:
+            st.error(f"Regime analysis failed: {e}")
+
 st.markdown("---")
 st.caption("Bloom Terminal \u2022 Reports conditions, tracks your own targets \u2022 Never recommends trades")
