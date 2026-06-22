@@ -496,13 +496,13 @@ with col_a:
 with col_b:
     regime_end = st.text_input("End Date", value=today, key="regime_end")
 with col_c:
-    regime_key = st.text_input("TwelveData API Key", value="demo", key="regime_apikey", type="password")
+    data_source = st.selectbox("Data Source", options=["yfinance", "twelvedata"], key="regime_source")
 
 if st.button("Run Regime Analysis", use_container_width=True):
-    with st.spinner(f"Fetching {regime_ticker.upper()} from TwelveData ..."):
+    with st.spinner(f"Fetching {regime_ticker.upper()} ..."):
         try:
-            from bloom_terminal.regimes import fetch_twelvedata, compute_regime_report, build_regime_chart
-            df = fetch_twelvedata(regime_ticker, regime_start, regime_end, regime_key)
+            from bloom_terminal.regimes import fetch_data, compute_regime_report, build_regime_chart
+            df = fetch_data(regime_ticker, regime_start, regime_end, source=data_source)
             report = compute_regime_report(df)
             fig = build_regime_chart(report)
 

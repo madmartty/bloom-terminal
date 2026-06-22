@@ -1,32 +1,57 @@
 import sys
 import json
 import math
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
 import plotly.graph_objects as go
 import requests
+import yfinance as yf
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-TWELVEDATA_API_KEY = "demo"
-
-TWELVEDATA_BASE = "https://api.twelvedata.com/time_series"
 
 SMA_WINDOWS = [20, 50, 200]
 
 
-def _parse_twelvedate(d: str) -> date:
-    return datetime.strptime(d.split("T")[0], "%Y-%m-%d").date()
-
-
-def fetch_twelvedata(
+def fetch_data(
     symbol: str,
     start_date: str,
     end_date: str,
-    apikey: str = TWELVEDATA_API_KEY,
+    source: str = "yfinance",
+    apikey: str | None = None,
 ) -> pd.DataFrame:
+    if source == "twelvedata":
+        return _fetch_twelvedata(symbol, start_date, end_date, apikey or "demo")
+    return _fetch_yfinance(symbol, start_date, end_date)
+
+
+def _fetch_yfinance(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+    try:
+        tk = yf.Ticker(symbol)
+        hist = tk.history(start=start_date, end=end_date)
+        if hist.empty:
+            raise ValueError(f"No yfinance data for {symbol}")
+        df = hist.reset_index()
+        date_col = df.columns[0]
+        df = df.rename(columns={
+            date_col: "date",
+            "Open": "open", "High": "high",
+            "Low": "low", "Close": "close", "Volume": "volume",
+        })
+        df["date"] = pd.to_datetime(df["date"]).dt.date
+        return df[["date", "open", "high", "low", "close", "volume"]]
+    except Exception as e:
+        raise ValueError(f"yfinance error for {symbol}: {e}")
+
+
+def _fetch_twelvedata(
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    apikey: str = "demo",
+) -> pd.DataFrame:
+    url = "https://api.twelvedata.com/time_series"
     params = {
         "symbol": symbol.upper(),
         "interval": "1day",
@@ -35,7 +60,7 @@ def fetch_twelvedata(
         "apikey": apikey,
         "format": "JSON",
     }
-    resp = requests.get(TWELVEDATA_BASE, params=params, timeout=30)
+    resp = requests.get(url, params=params, timeout=30)
     data = resp.json()
 
     if data.get("status") == "error":
@@ -47,8 +72,9 @@ def fetch_twelvedata(
 
     rows = []
     for v in values:
+        dt = datetime.strptime(v["datetime"].split("T")[0], "%Y-%m-%d").date()
         rows.append({
-            "date": _parse_twelvedate(v["datetime"]),
+            "date": dt,
             "open": float(v["open"]),
             "high": float(v["high"]),
             "low": float(v["low"]),
