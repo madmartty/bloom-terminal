@@ -14,16 +14,65 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 SMA_WINDOWS = [20, 50, 200]
 
 
+FOREX_SLASH_SYMBOLS = {"EURUSD", "GBPUSD", "USDJPY", "USDCAD", "USDCHF", "AUDUSD", "NZDUSD"}
+CRYPTO_SLASH_SYMBOLS = {"BTCUSD", "ETHUSD", "SOLUSD", "XRPUSD", "ADAUSD", "DOGEUSD", "DOTUSD"}
+COMMODITY_YAHOO = {
+    "XAUUSD": "GC=F", "XAGUSD": "SI=F", "UKOIL": "BZ=F",
+    "USOIL": "CL=F", "NATGAS": "NG=F", "COPPER": "HG=F",
+}
+INDEX_YAHOO = {
+    "SPX": "^GSPC", "NDX": "^IXIC", "DJI": "^DJI",
+    "RUT": "^RUT", "VIX": "^VIX",
+}
+
+
+def _yahoo_symbol(symbol: str) -> str:
+    s = symbol.upper().replace("/", "").replace("-", "")
+    if s in COMMODITY_YAHOO:
+        return COMMODITY_YAHOO[s]
+    if s in INDEX_YAHOO:
+        return INDEX_YAHOO[s]
+    if s in FOREX_SLASH_SYMBOLS:
+        return s[:3] + "=" + s[3:] + "=X"
+    return symbol
+
+
 def fetch_data(
     symbol: str,
     start_date: str,
     end_date: str,
-    source: str = "yfinance",
-    apikey: str | None = None,
+    source: str = "auto",
 ) -> pd.DataFrame:
     if source == "twelvedata":
-        return _fetch_twelvedata(symbol, start_date, end_date, apikey or "demo")
-    return _fetch_yfinance(symbol, start_date, end_date)
+        return _fetch_twelvedata(symbol, start_date, end_date, "demo")
+    if source == "yfinance":
+        return _fetch_yfinance(symbol, start_date, end_date)
+
+    # auto: try TwelveData first (handles forex/crypto/indices natively), fallback yfinance
+    try:
+        return _fetch_twelvedata(symbol, start_date, end_date, "demo")
+    except Exception:
+        return _fetch_yfinance(_yahoo_symbol(symbol), start_date, end_date)
+
+
+def _map_twelvedata_fields(data: dict, symbol: str) -> pd.DataFrame:
+    values = data.get("values", [])
+    if not values:
+        raise ValueError(f"No data returned for {symbol}")
+    rows = []
+    for v in values:
+        dt = datetime.strptime(v["datetime"].split("T")[0], "%Y-%m-%d").date()
+        rows.append({
+            "date": dt,
+            "open": float(v["open"]),
+            "high": float(v["high"]),
+            "low": float(v["low"]),
+            "close": float(v["close"]),
+            "volume": float(v.get("volume", 0)),
+        })
+    df = pd.DataFrame(rows)
+    df = df.sort_values("date").reset_index(drop=True)
+    return df
 
 
 def _fetch_yfinance(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
@@ -51,9 +100,15 @@ def _fetch_twelvedata(
     end_date: str,
     apikey: str = "demo",
 ) -> pd.DataFrame:
+    sym = symbol.upper().replace("/", "")
+    if sym in FOREX_SLASH_SYMBOLS:
+        sym = sym[:3] + "/" + sym[3:]
+    elif sym in CRYPTO_SLASH_SYMBOLS:
+        sym = sym[:3] + "/" + sym[3:]
+
     url = "https://api.twelvedata.com/time_series"
     params = {
-        "symbol": symbol.upper(),
+        "symbol": sym,
         "interval": "1day",
         "start_date": start_date,
         "end_date": end_date,

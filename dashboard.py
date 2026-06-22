@@ -496,7 +496,7 @@ with col_a:
 with col_b:
     regime_end = st.text_input("End Date", value=today, key="regime_end")
 with col_c:
-    data_source = st.selectbox("Data Source", options=["yfinance", "twelvedata"], key="regime_source")
+    data_source = st.selectbox("Data Source", options=["auto", "yfinance", "twelvedata"], key="regime_source")
 
 if st.button("Run Regime Analysis", use_container_width=True):
     with st.spinner(f"Fetching {regime_ticker.upper()} ..."):
