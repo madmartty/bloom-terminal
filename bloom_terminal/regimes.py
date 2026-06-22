@@ -15,7 +15,15 @@ SMA_WINDOWS = [20, 50, 200]
 
 
 FOREX_SLASH_SYMBOLS = {"EURUSD", "GBPUSD", "USDJPY", "USDCAD", "USDCHF", "AUDUSD", "NZDUSD"}
+
+
+def _yahoo_forex(s: str) -> str:
+    return s[:3] + s[3:] + "=X"
 CRYPTO_SLASH_SYMBOLS = {"BTCUSD", "ETHUSD", "SOLUSD", "XRPUSD", "ADAUSD", "DOGEUSD", "DOTUSD"}
+
+
+def _yahoo_crypto(s: str) -> str:
+    return s[:3] + "-" + s[3:]
 COMMODITY_YAHOO = {
     "XAUUSD": "GC=F", "XAGUSD": "SI=F", "UKOIL": "BZ=F",
     "USOIL": "CL=F", "NATGAS": "NG=F", "COPPER": "HG=F",
@@ -33,7 +41,12 @@ def _yahoo_symbol(symbol: str) -> str:
     if s in INDEX_YAHOO:
         return INDEX_YAHOO[s]
     if s in FOREX_SLASH_SYMBOLS:
-        return s[:3] + "=" + s[3:] + "=X"
+        return _yahoo_forex(s)
+    if s in CRYPTO_SLASH_SYMBOLS:
+        return _yahoo_crypto(s)
+    # strip slashes for yfinance (e.g. BTC/USD -> BTC-USD)
+    if "/" in symbol:
+        return symbol.replace("/", "-")
     return symbol
 
 
@@ -46,7 +59,7 @@ def fetch_data(
     if source == "twelvedata":
         return _fetch_twelvedata(symbol, start_date, end_date, "demo")
     if source == "yfinance":
-        return _fetch_yfinance(symbol, start_date, end_date)
+        return _fetch_yfinance(_yahoo_symbol(symbol), start_date, end_date)
 
     # auto: try TwelveData first (handles forex/crypto/indices natively), fallback yfinance
     try:
