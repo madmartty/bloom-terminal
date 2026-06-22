@@ -477,7 +477,7 @@ left, right = st.columns([2.2, 1])
 with left:
     if not vals:
         st.info("No data yet. Click Run Pipeline to fetch today's data.")
-        if st.button("Run Pipeline"):
+        if st.button("Run Pipeline", key="run_pipeline_empty"):
             run_pipeline()
     else:
         # ── positions grid ────────────────────────────────────
@@ -797,7 +797,7 @@ with right:
 
     # ── pipeline button always visible ─────────────────────
     st.markdown("---")
-    if st.button("Run Pipeline"):
+    if st.button("Run Pipeline", key="run_pipeline_sidebar"):
         run_pipeline()
 
 st.markdown(

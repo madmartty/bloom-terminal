@@ -79,7 +79,7 @@ with col_b:
 with col_c:
     data_source = st.selectbox("Data Source", options=["auto", "yfinance", "twelvedata"], key="regime_source")
 
-if st.button("Run Regime Analysis", use_container_width=True):
+if st.button("Run Regime Analysis", key="run_regime", use_container_width=True):
     with st.spinner(f"Fetching {regime_ticker.upper()} ..."):
         try:
             from bloom_terminal.regimes import fetch_data, compute_regime_report, build_regime_chart
